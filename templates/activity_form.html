@@ -24,7 +24,7 @@
                 id="start_time"
                 name="start_time"
                 required
-                value="{% if activity %}{{ activity.start_time.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+                {% if activity %}data-utc="{{ activity.start_time.isoformat() }}"{% endif %}
             >
         </div>
 
@@ -34,7 +34,7 @@
                 type="datetime-local"
                 id="end_time"
                 name="end_time"
-                value="{% if activity and activity.end_time %}{{ activity.end_time.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+                {% if activity and activity.end_time %}data-utc="{{ activity.end_time.isoformat() }}"{% endif %}
             >
         </div>
 
@@ -103,13 +103,42 @@ document.getElementById('activityForm').addEventListener('submit', async (e) => 
     }
 });
 
-// Set default to current time if adding new activity
-{% if not activity %}
+// Convert UTC to local time for editing, or set current time for new activity
 window.addEventListener('load', () => {
+    {% if activity %}
+    // Convert UTC times to local for editing
+    const startInput = document.getElementById('start_time');
+    const endInput = document.getElementById('end_time');
+
+    if (startInput.dataset.utc) {
+        const startDate = new Date(startInput.dataset.utc);
+        const year = startDate.getFullYear();
+        const month = String(startDate.getMonth() + 1).padStart(2, '0');
+        const day = String(startDate.getDate()).padStart(2, '0');
+        const hours = String(startDate.getHours()).padStart(2, '0');
+        const minutes = String(startDate.getMinutes()).padStart(2, '0');
+        startInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    if (endInput.dataset.utc) {
+        const endDate = new Date(endInput.dataset.utc);
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, '0');
+        const day = String(endDate.getDate()).padStart(2, '0');
+        const hours = String(endDate.getHours()).padStart(2, '0');
+        const minutes = String(endDate.getMinutes()).padStart(2, '0');
+        endInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    {% else %}
+    // Set default to current local time for new activity
     const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('start_time').value = now.toISOString().slice(0, 16);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('start_time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    {% endif %}
 });
-{% endif %}
 </script>
 {% endblock %}

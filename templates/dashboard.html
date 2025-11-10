@@ -117,9 +117,9 @@
             </div>
             <div class="activity-body">
                 <p class="activity-time">
-                    <strong>Start:</strong> {{ activity.start_time.strftime('%Y-%m-%d %H:%M') }}
+                    <strong>Start:</strong> <span class="local-time" data-utc="{{ activity.start_time.isoformat() }}">{{ activity.start_time.strftime('%Y-%m-%d %H:%M') }}</span>
                     {% if activity.end_time %}
-                    <br><strong>End:</strong> {{ activity.end_time.strftime('%Y-%m-%d %H:%M') }}
+                    <br><strong>End:</strong> <span class="local-time" data-utc="{{ activity.end_time.isoformat() }}">{{ activity.end_time.strftime('%Y-%m-%d %H:%M') }}</span>
                     <br><strong>Duration:</strong> {{ ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int }} minutes
                     {% endif %}
                 </p>
@@ -136,6 +136,44 @@
 
 {% block extra_js %}
 <script>
+// Convert UTC times to local timezone
+function convertToLocalTime() {
+    console.log('Starting timezone conversion...');
+    const elements = document.querySelectorAll('.local-time');
+    console.log('Found', elements.length, 'elements to convert');
+
+    elements.forEach(element => {
+        const utcTime = element.dataset.utc;
+        console.log('UTC time from data attribute:', utcTime);
+
+        if (utcTime) {
+            const date = new Date(utcTime);
+            console.log('Parsed date object:', date);
+            console.log('Local time string:', date.toString());
+
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            };
+            const converted = date.toLocaleString(undefined, options);
+            console.log('Converted to local:', converted);
+            element.textContent = converted;
+        }
+    });
+    console.log('Timezone conversion complete');
+}
+
+// Run on page load
+console.log('Registering load event listener');
+window.addEventListener('load', function() {
+    console.log('Page loaded, converting times');
+    convertToLocalTime();
+});
+
 // Filter functionality
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {

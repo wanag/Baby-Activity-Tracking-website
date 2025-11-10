@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel, Field, field_validator
+from datetime import datetime, timezone
 from typing import Optional
 from models import ActivityType
 
@@ -9,6 +9,18 @@ class ActivityBase(BaseModel):
     start_time: datetime
     end_time: Optional[datetime] = None
     notes: Optional[str] = None
+
+    @field_validator('start_time', 'end_time')
+    @classmethod
+    def ensure_timezone_aware(cls, v: Optional[datetime]) -> Optional[datetime]:
+        """Ensure datetime is timezone-aware and convert to UTC."""
+        if v is None:
+            return v
+        if v.tzinfo is None:
+            # If naive, assume UTC
+            return v.replace(tzinfo=timezone.utc)
+        # Convert to UTC
+        return v.astimezone(timezone.utc)
 
 
 class ActivityCreate(ActivityBase):
@@ -21,10 +33,26 @@ class ActivityUpdate(BaseModel):
     end_time: Optional[datetime] = None
     notes: Optional[str] = None
 
+    @field_validator('start_time', 'end_time')
+    @classmethod
+    def ensure_timezone_aware(cls, v: Optional[datetime]) -> Optional[datetime]:
+        """Ensure datetime is timezone-aware and convert to UTC."""
+        if v is None:
+            return v
+        if v.tzinfo is None:
+            # If naive, assume UTC
+            return v.replace(tzinfo=timezone.utc)
+        # Convert to UTC
+        return v.astimezone(timezone.utc)
+
 
 class ActivityResponse(ActivityBase):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        'from_attributes': True,
+        'json_encoders': {
+            datetime: lambda v: v.isoformat() if v else None
+        }
+    }
