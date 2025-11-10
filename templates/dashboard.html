@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Baby Activity Tracker{% endblock %}
+
+{% block content %}
+{% if not activities %}
+<!-- Welcome/Landing Page for First Time Users -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Welcome to Baby Activity Tracker</h1>
+        <p class="hero-subtitle">Track your baby's daily routine with ease. Monitor sleep, feeding, and diaper changes all in one place.</p>
+    </div>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon sleep-icon">💤</div>
+            <h3>Sleep Tracking</h3>
+            <p>Monitor sleep patterns and duration to understand your baby's rest schedule</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon feeding-icon">🍼</div>
+            <h3>Feeding Times</h3>
+            <p>Keep track of feeding sessions and maintain consistent feeding schedules</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon diaper-icon">🧷</div>
+            <h3>Diaper Changes</h3>
+            <p>Record diaper changes to monitor your baby's health and routine</p>
+        </div>
+    </div>
+
+    <div class="quick-add hero-quick-add">
+        <h2>Get Started - Log Your First Activity</h2>
+        <p class="quick-add-description">Click any button below to quickly add an activity, or use the detailed form for more information.</p>
+        <div class="quick-add-buttons">
+            <button class="quick-btn sleep-btn" onclick="quickAdd('sleep')">
+                <span class="btn-icon">💤</span>
+                <span class="btn-text">Sleep</span>
+            </button>
+            <button class="quick-btn feeding-btn" onclick="quickAdd('feeding')">
+                <span class="btn-icon">🍼</span>
+                <span class="btn-text">Feeding</span>
+            </button>
+            <button class="quick-btn diaper-btn" onclick="quickAdd('diaper')">
+                <span class="btn-icon">🧷</span>
+                <span class="btn-text">Diaper</span>
+            </button>
+        </div>
+        <a href="/add" class="btn-detailed">Use Detailed Form</a>
+    </div>
+</div>
+
+{% else %}
+<!-- Regular Dashboard with Activities -->
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h2>Recent Activities</h2>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="sleep">💤 Sleep</button>
+            <button class="filter-btn" data-filter="feeding">🍼 Feeding</button>
+            <button class="filter-btn" data-filter="diaper">🧷 Diaper</button>
+        </div>
+    </div>
+
+    <div class="quick-add">
+        <h3>Quick Add Activity</h3>
+        <div class="quick-add-buttons">
+            <button class="quick-btn sleep-btn" onclick="quickAdd('sleep')">
+                <span class="btn-icon">💤</span>
+                <span class="btn-text">Sleep</span>
+            </button>
+            <button class="quick-btn feeding-btn" onclick="quickAdd('feeding')">
+                <span class="btn-icon">🍼</span>
+                <span class="btn-text">Feeding</span>
+            </button>
+            <button class="quick-btn diaper-btn" onclick="quickAdd('diaper')">
+                <span class="btn-icon">🧷</span>
+                <span class="btn-text">Diaper</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="activity-stats">
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|length }}</span>
+            <span class="stat-label">Total Activities</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'sleep')|list|length }}</span>
+            <span class="stat-label">Sleep Sessions</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'feeding')|list|length }}</span>
+            <span class="stat-label">Feedings</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'diaper')|list|length }}</span>
+            <span class="stat-label">Diaper Changes</span>
+        </div>
+    </div>
+
+    <div class="activities-list">
+        {% for activity in activities %}
+        <div class="activity-card {{ activity.activity_type }}" data-type="{{ activity.activity_type }}">
+            <div class="activity-header">
+                <span class="activity-type-badge">
+                    {% if activity.activity_type == 'sleep' %}💤{% elif activity.activity_type == 'feeding' %}🍼{% else %}🧷{% endif %}
+                    {{ activity.activity_type|title }}
+                </span>
+                <div class="activity-actions">
+                    <a href="/edit/{{ activity.id }}" class="btn-edit">Edit</a>
+                    <button onclick="deleteActivity({{ activity.id }})" class="btn-delete">Delete</button>
+                </div>
+            </div>
+            <div class="activity-body">
+                <p class="activity-time">
+                    <strong>Start:</strong> {{ activity.start_time.strftime('%Y-%m-%d %H:%M') }}
+                    {% if activity.end_time %}
+                    <br><strong>End:</strong> {{ activity.end_time.strftime('%Y-%m-%d %H:%M') }}
+                    <br><strong>Duration:</strong> {{ ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int }} minutes
+                    {% endif %}
+                </p>
+                {% if activity.notes %}
+                <p class="activity-notes">{{ activity.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter functionality
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const filter = this.dataset.filter;
+        const cards = document.querySelectorAll('.activity-card');
+
+        cards.forEach(card => {
+            if (filter === 'all' || card.dataset.type === filter) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+});
+
+// Quick add function
+async function quickAdd(type) {
+    const now = new Date().toISOString();
+    const activity = {
+        activity_type: type,
+        start_time: now
+    };
+
+    try {
+        const response = await fetch('/api/activities/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(activity)
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to add activity');
+        }
+    } catch (error) {
+        alert('Error adding activity: ' + error);
+    }
+}
+
+// Delete activity function
+async function deleteActivity(id) {
+    if (!confirm('Are you sure you want to delete this activity?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/activities/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to delete activity');
+        }
+    } catch (error) {
+        alert('Error deleting activity: ' + error);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{% if activity %}Edit{% else %}Add{% endif %} Activity - Baby Activity Tracker{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>{% if activity %}Edit{% else %}Add New{% endif %} Activity</h2>
+
+    <form id="activityForm" class="activity-form">
+        <div class="form-group">
+            <label for="activity_type">Activity Type</label>
+            <select id="activity_type" name="activity_type" required>
+                <option value="">Select activity type...</option>
+                <option value="sleep" {% if activity and activity.activity_type == 'sleep' %}selected{% endif %}>Sleep</option>
+                <option value="feeding" {% if activity and activity.activity_type == 'feeding' %}selected{% endif %}>Feeding</option>
+                <option value="diaper" {% if activity and activity.activity_type == 'diaper' %}selected{% endif %}>Diaper Change</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="start_time">Start Time</label>
+            <input
+                type="datetime-local"
+                id="start_time"
+                name="start_time"
+                required
+                value="{% if activity %}{{ activity.start_time.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="end_time">End Time (Optional)</label>
+            <input
+                type="datetime-local"
+                id="end_time"
+                name="end_time"
+                value="{% if activity and activity.end_time %}{{ activity.end_time.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notes (Optional)</label>
+            <textarea
+                id="notes"
+                name="notes"
+                rows="4"
+                placeholder="Add any additional notes..."
+            >{% if activity %}{{ activity.notes or '' }}{% endif %}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">
+                {% if activity %}Update{% else %}Add{% endif %} Activity
+            </button>
+            <a href="/" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('activityForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = {
+        activity_type: formData.get('activity_type'),
+        start_time: new Date(formData.get('start_time')).toISOString(),
+        end_time: formData.get('end_time') ? new Date(formData.get('end_time')).toISOString() : null,
+        notes: formData.get('notes') || null
+    };
+
+    try {
+        {% if activity %}
+        // Update existing activity
+        const response = await fetch('/api/activities/{{ activity.id }}', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        {% else %}
+        // Create new activity
+        const response = await fetch('/api/activities/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        {% endif %}
+
+        if (response.ok) {
+            window.location.href = '/';
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.detail || 'Failed to save activity'));
+        }
+    } catch (error) {
+        alert('Error saving activity: ' + error);
+    }
+});
+
+// Set default to current time if adding new activity
+{% if not activity %}
+window.addEventListener('load', () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('start_time').value = now.toISOString().slice(0, 16);
+});
+{% endif %}
+</script>
+{% endblock %}
