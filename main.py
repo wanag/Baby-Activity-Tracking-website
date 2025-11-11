@@ -84,6 +84,6 @@ def health_check():
     return {"status": "healthy", "message": "Baby Activity Tracker is running"}
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7999)
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=7999)
