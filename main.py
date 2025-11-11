@@ -52,7 +52,7 @@ async def get_profile_context(db: AsyncSession) -> dict:
         select(Activity).order_by(Activity.created_at.desc()).limit(1)
     )
     recent_activity = recent_activity_result.scalar_one_or_none()
-    current_role = recent_activity.role.value if recent_activity and recent_activity.role else "Not set"
+    current_role = recent_activity.role if recent_activity and recent_activity.role else "Not set"
 
     return {
         "profile": current_profile,
