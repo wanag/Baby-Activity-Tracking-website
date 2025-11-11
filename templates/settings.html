@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Baby Activity Tracker{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <h2>Settings</h2>
+
+    <div class="settings-section">
+        <h3>Baby Profile</h3>
+
+        {% if profile %}
+        <div class="profile-display">
+            {% if profile.photo_path %}
+            <img src="{{ profile.photo_path }}" alt="Baby Photo" class="profile-photo">
+            {% endif %}
+            <div class="profile-info">
+                <p><strong>Name:</strong> {{ profile.name }}</p>
+                <p><strong>Birthday:</strong> {{ profile.birthday }}</p>
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <button class="btn btn-primary" onclick="showEditProfileForm()">Edit Profile</button>
+            <button class="btn btn-danger" onclick="deleteProfile()">Delete Profile</button>
+        </div>
+
+        <div id="edit-profile-form" class="profile-form" style="display: none;">
+            <h4>Edit Baby Profile</h4>
+            <form id="profileUpdateForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="edit-name">Baby Name:</label>
+                    <input type="text" id="edit-name" name="name" value="{{ profile.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-birthday">Birthday:</label>
+                    <input type="date" id="edit-birthday" name="birthday" value="{{ profile.birthday }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-photo">Baby Photo (optional):</label>
+                    <input type="file" id="edit-photo" name="photo" accept="image/*">
+                    <small>Leave empty to keep current photo</small>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideEditProfileForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        {% else %}
+        <div class="no-profile">
+            <p>No baby profile exists yet. Create one to get started!</p>
+            <button class="btn btn-primary" onclick="showCreateProfileForm()">Create Baby Profile</button>
+        </div>
+
+        <div id="create-profile-form" class="profile-form" style="display: none;">
+            <h4>Create Baby Profile</h4>
+            <form id="profileCreateForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="create-name">Baby Name:</label>
+                    <input type="text" id="create-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-birthday">Birthday:</label>
+                    <input type="date" id="create-birthday" name="birthday" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-photo">Baby Photo (optional):</label>
+                    <input type="file" id="create-photo" name="photo" accept="image/*">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Profile</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateProfileForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="settings-section">
+        <h3>Role Settings</h3>
+        <p>When adding activities, you can select your role. Available roles:</p>
+        <ul class="role-list">
+            <li>Mom</li>
+            <li>Dad</li>
+            <li>Grandparent</li>
+            <li>Caregiver</li>
+            <li>Other</li>
+        </ul>
+        <p><small>Your last selected role will be remembered for convenience.</small></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide create profile form
+    function showCreateProfileForm() {
+        document.getElementById('create-profile-form').style.display = 'block';
+    }
+
+    function hideCreateProfileForm() {
+        document.getElementById('create-profile-form').style.display = 'none';
+    }
+
+    // Show/hide edit profile form
+    function showEditProfileForm() {
+        document.getElementById('edit-profile-form').style.display = 'block';
+    }
+
+    function hideEditProfileForm() {
+        document.getElementById('edit-profile-form').style.display = 'none';
+    }
+
+    // Create profile
+    document.getElementById('profileCreateForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        try {
+            const response = await fetch('/api/profiles/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Profile created successfully!');
+                window.location.reload();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + error.detail);
+            }
+        } catch (error) {
+            alert('Error creating profile: ' + error);
+        }
+    });
+
+    // Update profile
+    document.getElementById('profileUpdateForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const profileId = {{ profile.id if profile else 'null' }};
+
+        try {
+            const response = await fetch(`/api/profiles/${profileId}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Profile updated successfully!');
+                window.location.reload();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + error.detail);
+            }
+        } catch (error) {
+            alert('Error updating profile: ' + error);
+        }
+    });
+
+    // Delete profile
+    async function deleteProfile() {
+        if (!confirm('Are you sure you want to delete this profile? This will permanently delete all associated activities!')) {
+            return;
+        }
+
+        const profileId = {{ profile.id if profile else 'null' }};
+
+        try {
+            const response = await fetch(`/api/profiles/${profileId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Profile deleted successfully!');
+                window.location.reload();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + error.detail);
+            }
+        } catch (error) {
+            alert('Error deleting profile: ' + error);
+        }
+    }
+</script>
+{% endblock %}

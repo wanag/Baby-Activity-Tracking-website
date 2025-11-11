@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Enum, TypeDecorator
+from sqlalchemy import Column, Integer, String, DateTime, Text, Enum, TypeDecorator, ForeignKey, Date
+from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import enum
 from database import Base
@@ -37,6 +38,30 @@ class ActivityType(str, enum.Enum):
     DIAPER = "diaper"
 
 
+class Role(str, enum.Enum):
+    MOM = "Mom"
+    DAD = "Dad"
+    GRANDPARENT = "Grandparent"
+    CAREGIVER = "Caregiver"
+    OTHER = "Other"
+
+
+class BabyProfile(Base):
+    __tablename__ = "baby_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    birthday = Column(Date, nullable=False)
+    photo_path = Column(String, nullable=True)
+    created_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationship to activities
+    activities = relationship("Activity", back_populates="profile", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<BabyProfile(id={self.id}, name={self.name}, birthday={self.birthday})>"
+
+
 class Activity(Base):
     __tablename__ = "activities"
 
@@ -45,7 +70,12 @@ class Activity(Base):
     start_time = Column(TZDateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     end_time = Column(TZDateTime, nullable=True)
     notes = Column(Text, nullable=True)
+    role = Column(String, nullable=True)  # Who performed this activity
+    profile_id = Column(Integer, ForeignKey("baby_profiles.id", ondelete="CASCADE"), nullable=True)
     created_at = Column(TZDateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
+    # Relationship to profile
+    profile = relationship("BabyProfile", back_populates="activities")
+
     def __repr__(self):
-        return f"<Activity(id={self.id}, type={self.activity_type}, start={self.start_time})>"
+        return f"<Activity(id={self.id}, type={self.activity_type}, start={self.start_time}, role={self.role})>"

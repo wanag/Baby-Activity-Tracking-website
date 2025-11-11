@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from database import get_db
-from models import Activity
+from models import Activity, BabyProfile
 from schemas import ActivityCreate, ActivityUpdate, ActivityResponse
 
 router = APIRouter(prefix="/api/activities", tags=["activities"])
@@ -17,6 +17,13 @@ async def create_activity(
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new activity."""
+    # Get current profile and auto-associate if profile_id not provided
+    if activity.profile_id is None:
+        result = await db.execute(select(BabyProfile))
+        current_profile = result.scalar_one_or_none()
+        if current_profile:
+            activity.profile_id = current_profile.id
+
     db_activity = Activity(**activity.model_dump())
     db.add(db_activity)
     await db.commit()

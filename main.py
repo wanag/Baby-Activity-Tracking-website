@@ -7,8 +7,8 @@ from sqlalchemy import select
 from contextlib import asynccontextmanager
 
 from database import get_db, init_db
-from models import Activity
-from routers import activities
+from models import Activity, BabyProfile
+from routers import activities, profiles
 
 
 @asynccontextmanager
@@ -34,12 +34,18 @@ templates = Jinja2Templates(directory="templates")
 
 # Include API routers
 app.include_router(activities.router)
+app.include_router(profiles.router)
 
 
 # Template routes
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
     """Display the dashboard with all activities."""
+    # Get current profile
+    profile_result = await db.execute(select(BabyProfile))
+    current_profile = profile_result.scalar_one_or_none()
+
+    # Get activities
     result = await db.execute(
         select(Activity).order_by(Activity.start_time.desc()).limit(50)
     )
@@ -47,7 +53,7 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
 
     return templates.TemplateResponse(
         "dashboard.html",
-        {"request": request, "activities": activities_list}
+        {"request": request, "activities": activities_list, "profile": current_profile}
     )
 
 
@@ -75,6 +81,19 @@ async def edit_activity_form(
     return templates.TemplateResponse(
         "activity_form.html",
         {"request": request, "activity": activity}
+    )
+
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Display the settings page."""
+    # Get current profile
+    profile_result = await db.execute(select(BabyProfile))
+    current_profile = profile_result.scalar_one_or_none()
+
+    return templates.TemplateResponse(
+        "settings.html",
+        {"request": request, "profile": current_profile}
     )
 
 

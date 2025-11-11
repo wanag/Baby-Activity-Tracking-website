@@ -55,6 +55,18 @@
 {% else %}
 <!-- Regular Dashboard with Activities -->
 <div class="dashboard">
+    {% if profile %}
+    <div class="profile-banner">
+        {% if profile.photo_path %}
+        <img src="{{ profile.photo_path }}" alt="{{ profile.name }}" class="profile-photo-small">
+        {% endif %}
+        <div class="profile-details">
+            <h3>{{ profile.name }}</h3>
+            <p class="profile-birthday">Born: {{ profile.birthday }}</p>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="dashboard-header">
         <h2>Recent Activities</h2>
         <div class="filter-buttons">
@@ -121,6 +133,9 @@
                     {% if activity.end_time %}
                     <br><strong>End:</strong> <span class="local-time" data-utc="{{ activity.end_time.isoformat() }}">{{ activity.end_time.strftime('%Y-%m-%d %H:%M') }}</span>
                     <br><strong>Duration:</strong> {{ ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int }} minutes
+                    {% endif %}
+                    {% if activity.role %}
+                    <br><strong>By:</strong> {{ activity.role }}
                     {% endif %}
                 </p>
                 {% if activity.notes %}

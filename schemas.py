@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from typing import Optional
 from models import ActivityType
 
@@ -9,6 +9,8 @@ class ActivityBase(BaseModel):
     start_time: datetime
     end_time: Optional[datetime] = None
     notes: Optional[str] = None
+    role: Optional[str] = None
+    profile_id: Optional[int] = None
 
     @field_validator('start_time', 'end_time')
     @classmethod
@@ -32,6 +34,8 @@ class ActivityUpdate(BaseModel):
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     notes: Optional[str] = None
+    role: Optional[str] = None
+    profile_id: Optional[int] = None
 
     @field_validator('start_time', 'end_time')
     @classmethod
@@ -54,5 +58,35 @@ class ActivityResponse(ActivityBase):
         'from_attributes': True,
         'json_encoders': {
             datetime: lambda v: v.isoformat() if v else None
+        }
+    }
+
+
+# Baby Profile Schemas
+class ProfileBase(BaseModel):
+    name: str
+    birthday: date
+
+
+class ProfileCreate(ProfileBase):
+    pass
+
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    birthday: Optional[date] = None
+    photo_path: Optional[str] = None
+
+
+class ProfileResponse(ProfileBase):
+    id: int
+    photo_path: Optional[str] = None
+    created_at: datetime
+
+    model_config = {
+        'from_attributes': True,
+        'json_encoders': {
+            datetime: lambda v: v.isoformat() if v else None,
+            date: lambda v: v.isoformat() if v else None
         }
     }

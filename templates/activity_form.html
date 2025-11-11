@@ -18,6 +18,18 @@
         </div>
 
         <div class="form-group">
+            <label for="role">Your Role</label>
+            <select id="role" name="role">
+                <option value="">Select your role...</option>
+                <option value="Mom" {% if activity and activity.role == 'Mom' %}selected{% endif %}>Mom</option>
+                <option value="Dad" {% if activity and activity.role == 'Dad' %}selected{% endif %}>Dad</option>
+                <option value="Grandparent" {% if activity and activity.role == 'Grandparent' %}selected{% endif %}>Grandparent</option>
+                <option value="Caregiver" {% if activity and activity.role == 'Caregiver' %}selected{% endif %}>Caregiver</option>
+                <option value="Other" {% if activity and activity.role == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="start_time">Start Time</label>
             <input
                 type="datetime-local"
@@ -64,11 +76,19 @@ document.getElementById('activityForm').addEventListener('submit', async (e) => 
     e.preventDefault();
 
     const formData = new FormData(e.target);
+    const role = formData.get('role') || null;
+
+    // Remember the selected role for next time
+    if (role) {
+        localStorage.setItem('lastUsedRole', role);
+    }
+
     const data = {
         activity_type: formData.get('activity_type'),
         start_time: new Date(formData.get('start_time')).toISOString(),
         end_time: formData.get('end_time') ? new Date(formData.get('end_time')).toISOString() : null,
-        notes: formData.get('notes') || null
+        notes: formData.get('notes') || null,
+        role: role
     };
 
     try {
@@ -138,6 +158,12 @@ window.addEventListener('load', () => {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     document.getElementById('start_time').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+    // Pre-fill role with last used value
+    const lastUsedRole = localStorage.getItem('lastUsedRole');
+    if (lastUsedRole) {
+        document.getElementById('role').value = lastUsedRole;
+    }
     {% endif %}
 });
 </script>
