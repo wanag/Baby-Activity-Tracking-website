@@ -28,3 +28,6 @@ Thumbs.db
 # Database
 *.db
 baby_tracker.db
+
+# User Uploads
+static/uploads/

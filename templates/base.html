@@ -17,6 +17,19 @@
                     <li><a href="/add" class="{% if request.url.path == '/add' %}active{% endif %}">Add Activity</a></li>
                     <li><a href="/settings" class="{% if request.url.path == '/settings' %}active{% endif %}">Settings</a></li>
                 </ul>
+                {% if profile %}
+                <div class="profile-banner">
+                    <span class="profile-item profile-name">{{ profile.name }}</span>
+                    <span class="profile-separator">•</span>
+                    <span class="profile-item">Born {{ profile.birthday.strftime('%m/%d/%Y') }}</span>
+                    <span class="profile-separator">•</span>
+                    <span class="profile-item">{{ baby_age_weeks }} weeks</span>
+                    <span class="profile-separator">•</span>
+                    <span class="profile-item">Today: {{ current_date.strftime('%m/%d/%Y') }}</span>
+                    <span class="profile-separator">•</span>
+                    <span class="profile-item">Role: {{ current_role }}</span>
+                </div>
+                {% endif %}
             </div>
         </nav>
     </header>

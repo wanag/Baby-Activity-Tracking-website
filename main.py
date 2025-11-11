@@ -5,6 +5,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from contextlib import asynccontextmanager
+from datetime import date, datetime
+from typing import Optional
 
 from database import get_db, init_db
 from models import Activity, BabyProfile
@@ -17,6 +19,47 @@ async def lifespan(app: FastAPI):
     await init_db()
     yield
     # Shutdown: cleanup if needed
+
+
+# Helper functions
+def calculate_age_in_weeks(birthday: date) -> int:
+    """Calculate baby's age in weeks from birthday."""
+    today = date.today()
+    age_days = (today - birthday).days
+    age_weeks = age_days // 7
+    return age_weeks
+
+
+async def get_profile_context(db: AsyncSession) -> dict:
+    """Get profile context for templates including baby info and current role."""
+    # Get current profile
+    profile_result = await db.execute(select(BabyProfile))
+    current_profile = profile_result.scalar_one_or_none()
+
+    if not current_profile:
+        return {
+            "profile": None,
+            "baby_age_weeks": None,
+            "current_date": date.today(),
+            "current_role": None
+        }
+
+    # Calculate age in weeks
+    age_weeks = calculate_age_in_weeks(current_profile.birthday)
+
+    # Get most recent activity to determine current role
+    recent_activity_result = await db.execute(
+        select(Activity).order_by(Activity.created_at.desc()).limit(1)
+    )
+    recent_activity = recent_activity_result.scalar_one_or_none()
+    current_role = recent_activity.role.value if recent_activity and recent_activity.role else "Not set"
+
+    return {
+        "profile": current_profile,
+        "baby_age_weeks": age_weeks,
+        "current_date": date.today(),
+        "current_role": current_role
+    }
 
 
 app = FastAPI(
@@ -41,9 +84,8 @@ app.include_router(profiles.router)
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
     """Display the dashboard with all activities."""
-    # Get current profile
-    profile_result = await db.execute(select(BabyProfile))
-    current_profile = profile_result.scalar_one_or_none()
+    # Get profile context for navbar
+    profile_context = await get_profile_context(db)
 
     # Get activities
     result = await db.execute(
@@ -53,16 +95,19 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
 
     return templates.TemplateResponse(
         "dashboard.html",
-        {"request": request, "activities": activities_list, "profile": current_profile}
+        {"request": request, "activities": activities_list, **profile_context}
     )
 
 
 @app.get("/add", response_class=HTMLResponse)
-async def add_activity_form(request: Request):
+async def add_activity_form(request: Request, db: AsyncSession = Depends(get_db)):
     """Display form to add a new activity."""
+    # Get profile context for navbar
+    profile_context = await get_profile_context(db)
+
     return templates.TemplateResponse(
         "activity_form.html",
-        {"request": request, "activity": None}
+        {"request": request, "activity": None, **profile_context}
     )
 
 
@@ -73,6 +118,9 @@ async def edit_activity_form(
     db: AsyncSession = Depends(get_db)
 ):
     """Display form to edit an existing activity."""
+    # Get profile context for navbar
+    profile_context = await get_profile_context(db)
+
     result = await db.execute(
         select(Activity).where(Activity.id == activity_id)
     )
@@ -80,20 +128,19 @@ async def edit_activity_form(
 
     return templates.TemplateResponse(
         "activity_form.html",
-        {"request": request, "activity": activity}
+        {"request": request, "activity": activity, **profile_context}
     )
 
 
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request, db: AsyncSession = Depends(get_db)):
     """Display the settings page."""
-    # Get current profile
-    profile_result = await db.execute(select(BabyProfile))
-    current_profile = profile_result.scalar_one_or_none()
+    # Get profile context for navbar
+    profile_context = await get_profile_context(db)
 
     return templates.TemplateResponse(
         "settings.html",
-        {"request": request, "profile": current_profile}
+        {"request": request, **profile_context}
     )
 
 
