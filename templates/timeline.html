@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Timeline - Baby Activity Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Timeline-specific styles */
+.timeline-container {
+    position: relative;
+}
+
+.timeline-date {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 80px;
+    z-index: 10;
+}
+
+.timeline-date:first-of-type {
+    margin-top: 0;
+}
+
+.timeline-date h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+}
+
+.timeline-date-meta {
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+    opacity: 0.95;
+}
+
+.day-activities {
+    margin-bottom: var(--spacing-lg);
+    padding-left: var(--spacing-md);
+    border-left: 3px solid var(--color-border);
+}
+
+.timeline-item {
+    margin-bottom: var(--spacing-md);
+}
+
+.timeline-empty {
+    text-align: center;
+    padding: var(--spacing-3xl);
+}
+
+.timeline-empty h2 {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="timeline-page">
+    <div class="dashboard-header">
+        <h2>Activity Timeline</h2>
+    </div>
+
+    {% if not activities %}
+    <!-- No data state -->
+    <div class="timeline-empty">
+        <div>📅</div>
+        <h2>No activities yet</h2>
+        <p>Start tracking activities to see them in chronological order!</p>
+        <a href="/add" class="btn-primary" style="display: inline-block; margin-top: 1.5rem;">Add First Activity</a>
+    </div>
+    {% else %}
+
+    <div class="timeline-container">
+        {% set current_date = namespace(value=None) %}
+        {% set day_count = namespace(value={}) %}
+
+        {% for activity in activities %}
+            {% set activity_date = activity.start_time.date() %}
+
+            {# If new date, close previous day and start new one #}
+            {% if current_date.value != activity_date %}
+                {% if current_date.value is not none %}
+                    </div> {# Close previous day-activities #}
+                {% endif %}
+
+                {# Initialize count for this date #}
+                {% set day_count.value = {'sleep': 0, 'feeding': 0, 'diaper': 0} %}
+
+                {# Count activities for this day #}
+                {% for act in activities if act.start_time.date() == activity_date %}
+                    {% set _ = day_count.value.__setitem__(act.activity_type, day_count.value[act.activity_type] + 1) %}
+                {% endfor %}
+
+                {# Date header #}
+                <div class="timeline-date">
+                    <h3>{{ activity_date.strftime('%A, %B %d, %Y') }}</h3>
+                    <div class="timeline-date-meta">
+                        💤 {{ day_count.value['sleep'] }} sleep ·
+                        🍼 {{ day_count.value['feeding'] }} feeding ·
+                        🧷 {{ day_count.value['diaper'] }} diaper
+                    </div>
+                </div>
+
+                <div class="day-activities">
+                {% set current_date.value = activity_date %}
+            {% endif %}
+
+            {# Activity card #}
+            <article class="activity-card {{ activity.activity_type }} timeline-item" data-type="{{ activity.activity_type }}">
+                <div class="activity-header">
+                    <span class="activity-type-badge">
+                        {% if activity.activity_type == 'sleep' %}💤{% elif activity.activity_type == 'feeding' %}🍼{% else %}🧷{% endif %}
+                        {{ activity.activity_type|title }}
+                    </span>
+                    <div class="activity-actions">
+                        <a href="/edit/{{ activity.id }}" class="btn-edit" aria-label="Edit {{ activity.activity_type }} activity">Edit</a>
+                        <button onclick="deleteActivity({{ activity.id }})" class="btn-delete" aria-label="Delete {{ activity.activity_type }} activity">Delete</button>
+                    </div>
+                </div>
+                <div class="activity-body">
+                    <p class="activity-time">
+                        <strong>Start:</strong> <span class="local-time" data-utc="{{ activity.start_time.isoformat() }}">{{ activity.start_time.strftime('%H:%M') }}</span>
+                        {% if activity.end_time %}
+                        <br><strong>End:</strong> <span class="local-time" data-utc="{{ activity.end_time.isoformat() }}">{{ activity.end_time.strftime('%H:%M') }}</span>
+                        <br><strong>Duration:</strong> {{ ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int }} minutes
+                        {% endif %}
+                        {% if activity.role %}
+                        <br><strong>By:</strong> {{ activity.role }}
+                        {% endif %}
+                    </p>
+                    {% if activity.notes %}
+                    <p class="activity-notes">📝 {{ activity.notes }}</p>
+                    {% endif %}
+                </div>
+            </article>
+        {% endfor %}
+
+        {# Close the last day-activities div #}
+        {% if current_date.value is not none %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Convert UTC times to local timezone
+function convertToLocalTime() {
+    const elements = document.querySelectorAll('.local-time');
+    elements.forEach(element => {
+        const utcTime = element.dataset.utc;
+        if (utcTime) {
+            const date = new Date(utcTime);
+
+            // For timeline, show only time
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            };
+            element.textContent = date.toLocaleTimeString(undefined, options);
+        }
+    });
+}
+
+window.addEventListener('load', convertToLocalTime);
+
+// Delete activity function
+async function deleteActivity(id) {
+    if (!confirm('Are you sure you want to delete this activity?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/activities/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to delete activity');
+        }
+    } catch (error) {
+        alert('Error deleting activity: ' + error);
+    }
+}
+</script>
+{% endblock %}

@@ -3,30 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Track your baby's daily activities including sleep, feeding, and diaper changes">
+    <meta name="theme-color" content="#6B9BD1">
     <title>{% block title %}Baby Activity Tracker{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <header>
-        <nav class="navbar">
+        <nav class="navbar" role="navigation" aria-label="Main navigation">
             <div class="container">
-                <h1 class="logo">Baby Tracker</h1>
+                <a href="/" class="logo" aria-label="Baby Tracker - Home">
+                    <span class="sr-only">Baby Tracker</span>
+                    Baby Tracker
+                </a>
                 <ul class="nav-links">
-                    <li><a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Dashboard</a></li>
-                    <li><a href="/add" class="{% if request.url.path == '/add' %}active{% endif %}">Add Activity</a></li>
-                    <li><a href="/settings" class="{% if request.url.path == '/settings' %}active{% endif %}">Settings</a></li>
+                    <li><a href="/" class="{% if request.url.path == '/' %}active{% endif %}" aria-current="{% if request.url.path == '/' %}page{% endif %}">Dashboard</a></li>
+                    <li><a href="/add" class="{% if request.url.path == '/add' %}active{% endif %}" aria-current="{% if request.url.path == '/add' %}page{% endif %}">Add Activity</a></li>
+                    <li><a href="/analytics" class="{% if request.url.path == '/analytics' %}active{% endif %}" aria-current="{% if request.url.path == '/analytics' %}page{% endif %}">Analytics</a></li>
+                    <li><a href="/timeline" class="{% if request.url.path == '/timeline' %}active{% endif %}" aria-current="{% if request.url.path == '/timeline' %}page{% endif %}">Timeline</a></li>
+                    <li><a href="/settings" class="{% if request.url.path == '/settings' %}active{% endif %}" aria-current="{% if request.url.path == '/settings' %}page{% endif %}">Settings</a></li>
                 </ul>
                 {% if profile %}
-                <div class="profile-banner">
+                <div class="profile-banner" aria-label="Baby profile information">
                     <span class="profile-item profile-name">{{ profile.name }}</span>
-                    <span class="profile-separator">•</span>
+                    <span class="profile-separator" aria-hidden="true">•</span>
                     <span class="profile-item">Born {{ profile.birthday.strftime('%m/%d/%Y') }}</span>
-                    <span class="profile-separator">•</span>
-                    <span class="profile-item">{{ baby_age_weeks }} weeks</span>
-                    <span class="profile-separator">•</span>
+                    <span class="profile-separator" aria-hidden="true">•</span>
+                    <span class="profile-item">{{ baby_age_weeks }} weeks old</span>
+                    <span class="profile-separator" aria-hidden="true">•</span>
                     <span class="profile-item">Today: {{ current_date.strftime('%m/%d/%Y') }}</span>
-                    <span class="profile-separator">•</span>
+                    <span class="profile-separator" aria-hidden="true">•</span>
                     <span class="profile-item">Role: {{ current_role }}</span>
                 </div>
                 {% endif %}
@@ -34,13 +41,13 @@
         </nav>
     </header>
 
-    <main class="container">
+    <main class="container" id="main-content" role="main">
         {% block content %}{% endblock %}
     </main>
 
-    <footer>
+    <footer role="contentinfo">
         <div class="container">
-            <p>&copy; 2025 Baby Activity Tracker</p>
+            <p>&copy; 2025 Baby Activity Tracker. All rights reserved.</p>
         </div>
     </footer>
 

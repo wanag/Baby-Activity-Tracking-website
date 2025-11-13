@@ -4,65 +4,78 @@
 
 {% block content %}
 <div class="form-container">
-    <h2>{% if activity %}Edit{% else %}Add New{% endif %} Activity</h2>
+    <h2>{% if activity %}✏️ Edit{% else %}➕ Add New{% endif %} Activity</h2>
 
-    <form id="activityForm" class="activity-form">
+    <form id="activityForm" class="activity-form" novalidate>
         <div class="form-group">
-            <label for="activity_type">Activity Type</label>
-            <select id="activity_type" name="activity_type" required>
+            <label for="activity_type">
+                Activity Type <span style="color: var(--color-danger);">*</span>
+            </label>
+            <select id="activity_type" name="activity_type" required aria-required="true">
                 <option value="">Select activity type...</option>
-                <option value="sleep" {% if activity and activity.activity_type == 'sleep' %}selected{% endif %}>Sleep</option>
-                <option value="feeding" {% if activity and activity.activity_type == 'feeding' %}selected{% endif %}>Feeding</option>
-                <option value="diaper" {% if activity and activity.activity_type == 'diaper' %}selected{% endif %}>Diaper Change</option>
+                <option value="sleep" {% if activity and activity.activity_type == 'sleep' %}selected{% endif %}>💤 Sleep</option>
+                <option value="feeding" {% if activity and activity.activity_type == 'feeding' %}selected{% endif %}>🍼 Feeding</option>
+                <option value="diaper" {% if activity and activity.activity_type == 'diaper' %}selected{% endif %}>🧷 Diaper Change</option>
             </select>
+            <small class="form-help">Choose the type of activity you want to track</small>
         </div>
 
         <div class="form-group">
             <label for="role">Your Role</label>
-            <select id="role" name="role">
-                <option value="">Select your role...</option>
-                <option value="Mom" {% if activity and activity.role == 'Mom' %}selected{% endif %}>Mom</option>
-                <option value="Dad" {% if activity and activity.role == 'Dad' %}selected{% endif %}>Dad</option>
-                <option value="Grandparent" {% if activity and activity.role == 'Grandparent' %}selected{% endif %}>Grandparent</option>
-                <option value="Caregiver" {% if activity and activity.role == 'Caregiver' %}selected{% endif %}>Caregiver</option>
-                <option value="Other" {% if activity and activity.role == 'Other' %}selected{% endif %}>Other</option>
+            <select id="role" name="role" aria-label="Select your role">
+                <option value="">Select your role (optional)...</option>
+                <option value="Mom" {% if activity and activity.role == 'Mom' %}selected{% endif %}>👩 Mom</option>
+                <option value="Dad" {% if activity and activity.role == 'Dad' %}selected{% endif %}>👨 Dad</option>
+                <option value="Grandparent" {% if activity and activity.role == 'Grandparent' %}selected{% endif %}>👵 Grandparent</option>
+                <option value="Caregiver" {% if activity and activity.role == 'Caregiver' %}selected{% endif %}>👤 Caregiver</option>
+                <option value="Other" {% if activity and activity.role == 'Other' %}selected{% endif %}>👥 Other</option>
             </select>
+            <small class="form-help">Who is performing this activity? (Your last selection will be remembered)</small>
         </div>
 
         <div class="form-group">
-            <label for="start_time">Start Time</label>
+            <label for="start_time">
+                Start Time <span style="color: var(--color-danger);">*</span>
+            </label>
             <input
                 type="datetime-local"
                 id="start_time"
                 name="start_time"
                 required
+                aria-required="true"
                 {% if activity %}data-utc="{{ activity.start_time.isoformat() }}"{% endif %}
             >
+            <small class="form-help">When did this activity start?</small>
         </div>
 
         <div class="form-group">
-            <label for="end_time">End Time (Optional)</label>
+            <label for="end_time">End Time</label>
             <input
                 type="datetime-local"
                 id="end_time"
                 name="end_time"
+                aria-label="Optional end time"
                 {% if activity and activity.end_time %}data-utc="{{ activity.end_time.isoformat() }}"{% endif %}
             >
+            <small class="form-help">Leave empty if the activity is still ongoing</small>
         </div>
 
         <div class="form-group">
-            <label for="notes">Notes (Optional)</label>
+            <label for="notes">Notes</label>
             <textarea
                 id="notes"
                 name="notes"
                 rows="4"
-                placeholder="Add any additional notes..."
+                placeholder="Add any additional notes or observations..."
+                aria-label="Optional notes"
             >{% if activity %}{{ activity.notes or '' }}{% endif %}</textarea>
+            <small class="form-help">Any additional details you'd like to remember</small>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn-primary">
-                {% if activity %}Update{% else %}Add{% endif %} Activity
+            <button type="submit" class="btn-primary" id="submitBtn">
+                <span id="submitText">{% if activity %}Update{% else %}Add{% endif %} Activity</span>
+                <span id="submitLoader" class="loading-spinner hidden"></span>
             </button>
             <a href="/" class="btn-secondary">Cancel</a>
         </div>
@@ -74,6 +87,15 @@
 <script>
 document.getElementById('activityForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Show loading state
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitLoader = document.getElementById('submitLoader');
+
+    submitBtn.disabled = true;
+    submitText.classList.add('hidden');
+    submitLoader.classList.remove('hidden');
 
     const formData = new FormData(e.target);
     const role = formData.get('role') || null;
@@ -117,9 +139,19 @@ document.getElementById('activityForm').addEventListener('submit', async (e) => 
         } else {
             const error = await response.json();
             alert('Error: ' + (error.detail || 'Failed to save activity'));
+
+            // Reset loading state
+            submitBtn.disabled = false;
+            submitText.classList.remove('hidden');
+            submitLoader.classList.add('hidden');
         }
     } catch (error) {
         alert('Error saving activity: ' + error);
+
+        // Reset loading state
+        submitBtn.disabled = false;
+        submitText.classList.remove('hidden');
+        submitLoader.classList.add('hidden');
     }
 });
 

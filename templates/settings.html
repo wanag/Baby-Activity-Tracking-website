@@ -4,10 +4,12 @@
 
 {% block content %}
 <div class="settings-page">
-    <h2>Settings</h2>
+    <div class="dashboard-header">
+        <h2>⚙️ Settings</h2>
+    </div>
 
     <div class="settings-section">
-        <h3>Baby Profile</h3>
+        <h3>👶 Baby Profile</h3>
 
         {% if profile %}
         <div class="profile-display">
@@ -79,16 +81,43 @@
     </div>
 
     <div class="settings-section">
-        <h3>Role Settings</h3>
+        <h3>👥 Role Settings</h3>
         <p>When adding activities, you can select your role. Available roles:</p>
         <ul class="role-list">
-            <li>Mom</li>
-            <li>Dad</li>
-            <li>Grandparent</li>
-            <li>Caregiver</li>
-            <li>Other</li>
+            <li>👩 Mom</li>
+            <li>👨 Dad</li>
+            <li>👵 Grandparent</li>
+            <li>👤 Caregiver</li>
+            <li>👥 Other</li>
         </ul>
-        <p><small>Your last selected role will be remembered for convenience.</small></p>
+        <p style="margin-top: 1rem;"><small><strong>Note:</strong> Your last selected role will be remembered for convenience when adding new activities.</small></p>
+    </div>
+
+    <div class="settings-section">
+        <h3>📊 Data & Privacy</h3>
+        <p>Your baby's activity data is stored locally in the application database.</p>
+        <div class="profile-info" style="margin-top: 1rem;">
+            <p><strong>Data Storage:</strong> All activities and profile information are stored securely on the server</p>
+            <p><strong>Activity Tracking:</strong> We track sleep, feeding, and diaper activities with timestamps and notes</p>
+            <p><strong>Role Tracking:</strong> Your selected role is stored with each activity for multi-caregiver tracking</p>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>ℹ️ About</h3>
+        <div class="profile-info">
+            <p><strong>Application:</strong> Baby Activity Tracker</p>
+            <p><strong>Version:</strong> 1.0.0</p>
+            <p><strong>Purpose:</strong> Track your baby's daily activities including sleep, feeding, and diaper changes</p>
+        </div>
+        <p style="margin-top: 1.5rem;">
+            <strong>Quick Links:</strong>
+        </p>
+        <div class="profile-actions">
+            <a href="/" class="btn btn-primary">📊 Dashboard</a>
+            <a href="/analytics" class="btn btn-primary">📈 Analytics</a>
+            <a href="/timeline" class="btn btn-primary">📅 Timeline</a>
+        </div>
     </div>
 </div>
 {% endblock %}

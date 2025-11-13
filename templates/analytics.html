@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Baby Activity Tracker{% endblock %}
+
+{% block content %}
+<div class="analytics-page">
+    <div class="dashboard-header">
+        <h2>Activity Analytics & Insights</h2>
+    </div>
+
+    {% if not activities %}
+    <!-- No data state -->
+    <div class="no-profile">
+        <p>📊 No activity data available yet.</p>
+        <p style="margin-top: 1rem;">Start tracking activities to see analytics and insights!</p>
+        <a href="/add" class="btn-primary" style="display: inline-block; margin-top: 1.5rem;">Add First Activity</a>
+    </div>
+    {% else %}
+
+    <!-- Overview Stats -->
+    <div class="activity-stats">
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|length }}</span>
+            <span class="stat-label">Total Activities</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'sleep')|list|length }}</span>
+            <span class="stat-label">Sleep Sessions</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'feeding')|list|length }}</span>
+            <span class="stat-label">Feedings</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'diaper')|list|length }}</span>
+            <span class="stat-label">Diaper Changes</span>
+        </div>
+    </div>
+
+    <!-- Sleep Analytics -->
+    <div class="settings-section">
+        <h3>💤 Sleep Analytics</h3>
+        <div class="activity-stats">
+            {% set sleep_activities = activities|selectattr('activity_type', 'equalto', 'sleep')|list %}
+            {% set completed_sleep = sleep_activities|selectattr('end_time')|list %}
+            {% if completed_sleep|length > 0 %}
+            {% set total_sleep_minutes = namespace(value=0) %}
+            {% for activity in completed_sleep %}
+            {% set duration = ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int %}
+            {% set total_sleep_minutes.value = total_sleep_minutes.value + duration %}
+            {% endfor %}
+            <div class="stat-card">
+                <span class="stat-number">{{ (total_sleep_minutes.value / 60)|round(1) }}</span>
+                <span class="stat-label">Total Hours</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ (total_sleep_minutes.value / completed_sleep|length)|round|int }}</span>
+                <span class="stat-label">Avg Minutes/Session</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ completed_sleep|length }}</span>
+                <span class="stat-label">Completed Sessions</span>
+            </div>
+            {% else %}
+            <div class="stat-card">
+                <span class="stat-number">-</span>
+                <span class="stat-label">No completed sleep sessions yet</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Feeding Analytics -->
+    <div class="settings-section">
+        <h3>🍼 Feeding Analytics</h3>
+        <div class="activity-stats">
+            {% set feeding_activities = activities|selectattr('activity_type', 'equalto', 'feeding')|list %}
+            {% set completed_feeding = feeding_activities|selectattr('end_time')|list %}
+            <div class="stat-card">
+                <span class="stat-number">{{ feeding_activities|length }}</span>
+                <span class="stat-label">Total Feedings</span>
+            </div>
+            {% if completed_feeding|length > 0 %}
+            {% set total_feeding_minutes = namespace(value=0) %}
+            {% for activity in completed_feeding %}
+            {% set duration = ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int %}
+            {% set total_feeding_minutes.value = total_feeding_minutes.value + duration %}
+            {% endfor %}
+            <div class="stat-card">
+                <span class="stat-number">{{ (total_feeding_minutes.value / completed_feeding|length)|round|int }}</span>
+                <span class="stat-label">Avg Minutes/Feeding</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ completed_feeding|length }}</span>
+                <span class="stat-label">Completed Feedings</span>
+            </div>
+            {% else %}
+            <div class="stat-card">
+                <span class="stat-number">-</span>
+                <span class="stat-label">Duration data unavailable</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Diaper Analytics -->
+    <div class="settings-section">
+        <h3>🧷 Diaper Change Analytics</h3>
+        <div class="activity-stats">
+            {% set diaper_activities = activities|selectattr('activity_type', 'equalto', 'diaper')|list %}
+            <div class="stat-card">
+                <span class="stat-number">{{ diaper_activities|length }}</span>
+                <span class="stat-label">Total Changes</span>
+            </div>
+            {% if activities|length > 0 %}
+            {% set days_tracked = ((activities|first).start_time - (activities|last).start_time).days + 1 %}
+            <div class="stat-card">
+                <span class="stat-number">{{ (diaper_activities|length / days_tracked)|round(1) if days_tracked > 0 else 0 }}</span>
+                <span class="stat-label">Avg Changes/Day</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ days_tracked }}</span>
+                <span class="stat-label">Days Tracked</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Activity Summary -->
+    <div class="settings-section">
+        <h3>📋 Recent Activity Summary</h3>
+        {% if activities|length > 0 %}
+        <div class="profile-display">
+            <div class="profile-info">
+                <p><strong>Latest Activity:</strong>
+                    {% if activities[0].activity_type == 'sleep' %}💤{% elif activities[0].activity_type == 'feeding' %}🍼{% else %}🧷{% endif %}
+                    {{ activities[0].activity_type|title }}
+                    <span class="local-time" data-utc="{{ activities[0].start_time.isoformat() }}">{{ activities[0].start_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                </p>
+                <p><strong>First Activity:</strong>
+                    <span class="local-time" data-utc="{{ activities[-1].start_time.isoformat() }}">{{ activities[-1].start_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                </p>
+                {% set days_tracking = ((activities[0].start_time - activities[-1].start_time).days) + 1 %}
+                <p><strong>Tracking Period:</strong> {{ days_tracking }} {{ 'day' if days_tracking == 1 else 'days' }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Role Distribution -->
+    {% set role_counts = {} %}
+    {% for activity in activities if activity.role %}
+    {% if activity.role in role_counts %}
+    {% set _ = role_counts.update({activity.role: role_counts[activity.role] + 1}) %}
+    {% else %}
+    {% set _ = role_counts.update({activity.role: 1}) %}
+    {% endif %}
+    {% endfor %}
+
+    {% if role_counts %}
+    <div class="settings-section">
+        <h3>👥 Activities by Caregiver</h3>
+        <div class="role-list">
+            {% for role, count in role_counts.items() %}
+            <li>{{ role }}: {{ count }} activities</li>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Convert UTC times to local timezone
+function convertToLocalTime() {
+    const elements = document.querySelectorAll('.local-time');
+    elements.forEach(element => {
+        const utcTime = element.dataset.utc;
+        if (utcTime) {
+            const date = new Date(utcTime);
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            };
+            element.textContent = date.toLocaleString(undefined, options);
+        }
+    });
+}
+
+window.addEventListener('load', convertToLocalTime);
+</script>
+{% endblock %}

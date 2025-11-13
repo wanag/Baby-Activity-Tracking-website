@@ -67,34 +67,26 @@
     </div>
     {% endif %}
 
-    <div class="dashboard-header">
-        <h2>Recent Activities</h2>
-        <div class="filter-buttons">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="sleep">💤 Sleep</button>
-            <button class="filter-btn" data-filter="feeding">🍼 Feeding</button>
-            <button class="filter-btn" data-filter="diaper">🧷 Diaper</button>
-        </div>
-    </div>
-
+    <!-- Quick Add Section (moved to top for better UX) -->
     <div class="quick-add">
         <h3>Quick Add Activity</h3>
         <div class="quick-add-buttons">
-            <button class="quick-btn sleep-btn" onclick="quickAdd('sleep')">
+            <button class="quick-btn sleep-btn" onclick="quickAdd('sleep')" aria-label="Log sleep activity">
                 <span class="btn-icon">💤</span>
                 <span class="btn-text">Sleep</span>
             </button>
-            <button class="quick-btn feeding-btn" onclick="quickAdd('feeding')">
+            <button class="quick-btn feeding-btn" onclick="quickAdd('feeding')" aria-label="Log feeding activity">
                 <span class="btn-icon">🍼</span>
                 <span class="btn-text">Feeding</span>
             </button>
-            <button class="quick-btn diaper-btn" onclick="quickAdd('diaper')">
+            <button class="quick-btn diaper-btn" onclick="quickAdd('diaper')" aria-label="Log diaper change">
                 <span class="btn-icon">🧷</span>
                 <span class="btn-text">Diaper</span>
             </button>
         </div>
     </div>
 
+    <!-- Activity Statistics -->
     <div class="activity-stats">
         <div class="stat-card">
             <span class="stat-number">{{ activities|length }}</span>
@@ -114,17 +106,29 @@
         </div>
     </div>
 
-    <div class="activities-list">
+    <!-- Dashboard Header with Tabs -->
+    <div class="dashboard-header">
+        <h2>Activities</h2>
+        <div class="filter-buttons" role="tablist" aria-label="Activity filters">
+            <button class="filter-btn active" data-filter="all" role="tab" aria-selected="true" aria-controls="activities-panel">All</button>
+            <button class="filter-btn" data-filter="sleep" role="tab" aria-selected="false" aria-controls="activities-panel">💤 Sleep</button>
+            <button class="filter-btn" data-filter="feeding" role="tab" aria-selected="false" aria-controls="activities-panel">🍼 Feeding</button>
+            <button class="filter-btn" data-filter="diaper" role="tab" aria-selected="false" aria-controls="activities-panel">🧷 Diaper</button>
+        </div>
+    </div>
+
+    <!-- Activities List Panel -->
+    <div class="activities-list" id="activities-panel" role="tabpanel" aria-label="Activity list">
         {% for activity in activities %}
-        <div class="activity-card {{ activity.activity_type }}" data-type="{{ activity.activity_type }}">
+        <article class="activity-card {{ activity.activity_type }}" data-type="{{ activity.activity_type }}">
             <div class="activity-header">
                 <span class="activity-type-badge">
                     {% if activity.activity_type == 'sleep' %}💤{% elif activity.activity_type == 'feeding' %}🍼{% else %}🧷{% endif %}
                     {{ activity.activity_type|title }}
                 </span>
                 <div class="activity-actions">
-                    <a href="/edit/{{ activity.id }}" class="btn-edit">Edit</a>
-                    <button onclick="deleteActivity({{ activity.id }})" class="btn-delete">Delete</button>
+                    <a href="/edit/{{ activity.id }}" class="btn-edit" aria-label="Edit {{ activity.activity_type }} activity">Edit</a>
+                    <button onclick="deleteActivity({{ activity.id }})" class="btn-delete" aria-label="Delete {{ activity.activity_type }} activity">Delete</button>
                 </div>
             </div>
             <div class="activity-body">
@@ -139,10 +143,10 @@
                     {% endif %}
                 </p>
                 {% if activity.notes %}
-                <p class="activity-notes">{{ activity.notes }}</p>
+                <p class="activity-notes">📝 {{ activity.notes }}</p>
                 {% endif %}
             </div>
-        </div>
+        </article>
         {% endfor %}
     </div>
 </div>
@@ -189,23 +193,33 @@ window.addEventListener('load', function() {
     convertToLocalTime();
 });
 
-// Filter functionality
+// Filter functionality with accessibility
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-        // Update active button
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        // Update active button and ARIA attributes
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
         this.classList.add('active');
+        this.setAttribute('aria-selected', 'true');
 
         const filter = this.dataset.filter;
         const cards = document.querySelectorAll('.activity-card');
+        let visibleCount = 0;
 
         cards.forEach(card => {
             if (filter === 'all' || card.dataset.type === filter) {
                 card.style.display = 'block';
+                visibleCount++;
             } else {
                 card.style.display = 'none';
             }
         });
+
+        // Announce filter change to screen readers
+        const announcement = `Showing ${visibleCount} ${filter === 'all' ? '' : filter} ${visibleCount === 1 ? 'activity' : 'activities'}`;
+        console.log(announcement);
     });
 });
 

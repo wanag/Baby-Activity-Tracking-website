@@ -144,6 +144,42 @@ async def settings_page(request: Request, db: AsyncSession = Depends(get_db)):
     )
 
 
+@app.get("/analytics", response_class=HTMLResponse)
+async def analytics_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Display the analytics page with activity insights."""
+    # Get profile context for navbar
+    profile_context = await get_profile_context(db)
+
+    # Get all activities ordered by start time
+    result = await db.execute(
+        select(Activity).order_by(Activity.start_time.desc())
+    )
+    activities_list = result.scalars().all()
+
+    return templates.TemplateResponse(
+        "analytics.html",
+        {"request": request, "activities": activities_list, **profile_context}
+    )
+
+
+@app.get("/timeline", response_class=HTMLResponse)
+async def timeline_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Display the timeline page with chronological activity view."""
+    # Get profile context for navbar
+    profile_context = await get_profile_context(db)
+
+    # Get all activities ordered by start time (newest first)
+    result = await db.execute(
+        select(Activity).order_by(Activity.start_time.desc())
+    )
+    activities_list = result.scalars().all()
+
+    return templates.TemplateResponse(
+        "timeline.html",
+        {"request": request, "activities": activities_list, **profile_context}
+    )
+
+
 # Health check endpoint
 @app.get("/api/health")
 def health_check():
