@@ -31,3 +31,6 @@ baby_tracker.db
 
 # User Uploads
 static/uploads/
+
+# Claude related
+.Claude
