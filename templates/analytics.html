@@ -35,6 +35,10 @@
             <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'diaper')|list|length }}</span>
             <span class="stat-label">Diaper Changes</span>
         </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'play')|list|length }}</span>
+            <span class="stat-label">Play Sessions</span>
+        </div>
     </div>
 
     <!-- Sleep Analytics -->
@@ -126,6 +130,39 @@
         </div>
     </div>
 
+    <!-- Play Analytics -->
+    <div class="settings-section">
+        <h3>🎨 Play Analytics</h3>
+        <div class="activity-stats">
+            {% set play_activities = activities|selectattr('activity_type', 'equalto', 'play')|list %}
+            {% set completed_play = play_activities|selectattr('end_time')|list %}
+            <div class="stat-card">
+                <span class="stat-number">{{ play_activities|length }}</span>
+                <span class="stat-label">Total Play Sessions</span>
+            </div>
+            {% if completed_play|length > 0 %}
+            {% set total_play_minutes = namespace(value=0) %}
+            {% for activity in completed_play %}
+            {% set duration = ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int %}
+            {% set total_play_minutes.value = total_play_minutes.value + duration %}
+            {% endfor %}
+            <div class="stat-card">
+                <span class="stat-number">{{ (total_play_minutes.value / 60)|round(1) }}</span>
+                <span class="stat-label">Total Hours</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ (total_play_minutes.value / completed_play|length)|round|int }}</span>
+                <span class="stat-label">Avg Minutes/Session</span>
+            </div>
+            {% else %}
+            <div class="stat-card">
+                <span class="stat-number">-</span>
+                <span class="stat-label">No completed play sessions yet</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Recent Activity Summary -->
     <div class="settings-section">
         <h3>📋 Recent Activity Summary</h3>
@@ -133,7 +170,7 @@
         <div class="profile-display">
             <div class="profile-info">
                 <p><strong>Latest Activity:</strong>
-                    {% if activities[0].activity_type == 'sleep' %}💤{% elif activities[0].activity_type == 'feeding' %}🍼{% else %}🧷{% endif %}
+                    {% if activities[0].activity_type == 'sleep' %}💤{% elif activities[0].activity_type == 'feeding' %}🍼{% elif activities[0].activity_type == 'diaper' %}🧷{% elif activities[0].activity_type == 'play' %}🎨{% else %}📝{% endif %}
                     {{ activities[0].activity_type|title }}
                     <span class="local-time" data-utc="{{ activities[0].start_time.isoformat() }}">{{ activities[0].start_time.strftime('%Y-%m-%d %H:%M') }}</span>
                 </p>

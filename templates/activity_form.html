@@ -16,6 +16,7 @@
                 <option value="sleep" {% if activity and activity.activity_type == 'sleep' %}selected{% endif %}>💤 Sleep</option>
                 <option value="feeding" {% if activity and activity.activity_type == 'feeding' %}selected{% endif %}>🍼 Feeding</option>
                 <option value="diaper" {% if activity and activity.activity_type == 'diaper' %}selected{% endif %}>🧷 Diaper Change</option>
+                <option value="play" {% if activity and activity.activity_type == 'play' %}selected{% endif %}>🎨 Play</option>
             </select>
             <small class="form-help">Choose the type of activity you want to track</small>
         </div>

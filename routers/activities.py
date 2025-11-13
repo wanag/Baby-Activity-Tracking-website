@@ -24,6 +24,22 @@ async def create_activity(
         if current_profile:
             activity.profile_id = current_profile.id
 
+    # Auto-close previous activity if it doesn't have an end_time
+    # Find the most recent activity that started before this new one
+    previous_activity_result = await db.execute(
+        select(Activity)
+        .where(Activity.start_time < activity.start_time)
+        .order_by(Activity.start_time.desc())
+        .limit(1)
+    )
+    previous_activity = previous_activity_result.scalar_one_or_none()
+
+    # If previous activity exists and has no end_time, set it to this activity's start_time
+    if previous_activity and previous_activity.end_time is None:
+        previous_activity.end_time = activity.start_time
+        await db.commit()
+
+    # Create the new activity
     db_activity = Activity(**activity.model_dump())
     db.add(db_activity)
     await db.commit()

@@ -90,7 +90,7 @@
                 {% endif %}
 
                 {# Initialize count for this date #}
-                {% set day_count.value = {'sleep': 0, 'feeding': 0, 'diaper': 0} %}
+                {% set day_count.value = {'sleep': 0, 'feeding': 0, 'diaper': 0, 'play': 0} %}
 
                 {# Count activities for this day #}
                 {% for act in activities if act.start_time.date() == activity_date %}
@@ -103,7 +103,8 @@
                     <div class="timeline-date-meta">
                         💤 {{ day_count.value['sleep'] }} sleep ·
                         🍼 {{ day_count.value['feeding'] }} feeding ·
-                        🧷 {{ day_count.value['diaper'] }} diaper
+                        🧷 {{ day_count.value['diaper'] }} diaper ·
+                        🎨 {{ day_count.value['play'] }} play
                     </div>
                 </div>
 
@@ -115,7 +116,7 @@
             <article class="activity-card {{ activity.activity_type }} timeline-item" data-type="{{ activity.activity_type }}">
                 <div class="activity-header">
                     <span class="activity-type-badge">
-                        {% if activity.activity_type == 'sleep' %}💤{% elif activity.activity_type == 'feeding' %}🍼{% else %}🧷{% endif %}
+                        {% if activity.activity_type == 'sleep' %}💤{% elif activity.activity_type == 'feeding' %}🍼{% elif activity.activity_type == 'diaper' %}🧷{% elif activity.activity_type == 'play' %}🎨{% else %}📝{% endif %}
                         {{ activity.activity_type|title }}
                     </span>
                     <div class="activity-actions">

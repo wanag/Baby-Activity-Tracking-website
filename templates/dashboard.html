@@ -35,17 +35,21 @@
         <h2>Get Started - Log Your First Activity</h2>
         <p class="quick-add-description">Click any button below to quickly add an activity, or use the detailed form for more information.</p>
         <div class="quick-add-buttons">
-            <button class="quick-btn sleep-btn" onclick="quickAdd('sleep')">
+            <button class="quick-btn sleep-btn" onclick="quickAdd('sleep')" aria-label="Log sleep activity">
                 <span class="btn-icon">💤</span>
                 <span class="btn-text">Sleep</span>
             </button>
-            <button class="quick-btn feeding-btn" onclick="quickAdd('feeding')">
+            <button class="quick-btn feeding-btn" onclick="quickAdd('feeding')" aria-label="Log feeding activity">
                 <span class="btn-icon">🍼</span>
                 <span class="btn-text">Feeding</span>
             </button>
-            <button class="quick-btn diaper-btn" onclick="quickAdd('diaper')">
+            <button class="quick-btn diaper-btn" onclick="quickAdd('diaper')" aria-label="Log diaper change">
                 <span class="btn-icon">🧷</span>
                 <span class="btn-text">Diaper</span>
+            </button>
+            <button class="quick-btn play-btn" onclick="quickAdd('play')" aria-label="Log play activity">
+                <span class="btn-icon">🎨</span>
+                <span class="btn-text">Play</span>
             </button>
         </div>
         <a href="/add" class="btn-detailed">Use Detailed Form</a>
@@ -83,15 +87,15 @@
                 <span class="btn-icon">🧷</span>
                 <span class="btn-text">Diaper</span>
             </button>
+            <button class="quick-btn play-btn" onclick="quickAdd('play')" aria-label="Log play activity">
+                <span class="btn-icon">🎨</span>
+                <span class="btn-text">Play</span>
+            </button>
         </div>
     </div>
 
     <!-- Activity Statistics -->
     <div class="activity-stats">
-        <div class="stat-card">
-            <span class="stat-number">{{ activities|length }}</span>
-            <span class="stat-label">Total Activities</span>
-        </div>
         <div class="stat-card">
             <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'sleep')|list|length }}</span>
             <span class="stat-label">Sleep Sessions</span>
@@ -104,6 +108,10 @@
             <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'diaper')|list|length }}</span>
             <span class="stat-label">Diaper Changes</span>
         </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ activities|selectattr('activity_type', 'equalto', 'play')|list|length }}</span>
+            <span class="stat-label">Play Sessions</span>
+        </div>
     </div>
 
     <!-- Dashboard Header with Tabs -->
@@ -114,6 +122,7 @@
             <button class="filter-btn" data-filter="sleep" role="tab" aria-selected="false" aria-controls="activities-panel">💤 Sleep</button>
             <button class="filter-btn" data-filter="feeding" role="tab" aria-selected="false" aria-controls="activities-panel">🍼 Feeding</button>
             <button class="filter-btn" data-filter="diaper" role="tab" aria-selected="false" aria-controls="activities-panel">🧷 Diaper</button>
+            <button class="filter-btn" data-filter="play" role="tab" aria-selected="false" aria-controls="activities-panel">🎨 Play</button>
         </div>
     </div>
 
@@ -123,7 +132,7 @@
         <article class="activity-card {{ activity.activity_type }}" data-type="{{ activity.activity_type }}">
             <div class="activity-header">
                 <span class="activity-type-badge">
-                    {% if activity.activity_type == 'sleep' %}💤{% elif activity.activity_type == 'feeding' %}🍼{% else %}🧷{% endif %}
+                    {% if activity.activity_type == 'sleep' %}💤{% elif activity.activity_type == 'feeding' %}🍼{% elif activity.activity_type == 'diaper' %}🧷{% elif activity.activity_type == 'play' %}🎨{% else %}📝{% endif %}
                     {{ activity.activity_type|title }}
                 </span>
                 <div class="activity-actions">
